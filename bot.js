@@ -13,10 +13,10 @@ let psList;
 })();
 
 // ============= НАСТРОЙКИ =============
-const TOKEN = process.env.BOT_TOKEN || "ВАШ_ТОКЕН";
+const TOKEN = process.env.BOT_TOKEN || "8672837047:AAG7fz0nyPN8yAPGgczm5zyrOQnkW8wE9ig";
 const ADMIN_IDS = process.env.ADMIN_IDS ? 
     process.env.ADMIN_IDS.split(',').map(Number) : 
-    [123456789];
+    [8754794142];
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
