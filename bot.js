@@ -6,12 +6,6 @@ const si = require('systeminformation');
 const axios = require('axios');
 const screenshot = require('screenshot-desktop');
 
-// Динамический импорт для ps-list (ES модуль)
-let psList;
-(async () => {
-    psList = (await import('ps-list')).default;
-})();
-
 // ============= НАСТРОЙКИ =============
 const TOKEN = process.env.BOT_TOKEN || "8672837047:AAG7fz0nyPN8yAPGgczm5zyrOQnkW8wE9ig";
 const ADMIN_IDS = process.env.ADMIN_IDS ? 
@@ -101,7 +95,6 @@ bot.onText(/\/start/, (msg) => {
         
         `📱 **ДРУГОЕ**\n` +
         `/notify "Текст" - уведомление\n` +
-        `/brightness 50 - яркость\n` +
         `/screenshot - скриншот\n` +
         `/ping - проверка связи`,
         { parse_mode: 'Markdown' }
@@ -184,17 +177,20 @@ bot.on('callback_query', async (query) => {
         );
     }
     else if (data === 'processes') {
-        // Используем динамический импорт psList
-        const psListModule = await import('ps-list');
-        const psList = psListModule.default;
-        const processes = await psList();
-        const top10 = processes.slice(0, 10).map((p, i) => 
-            `${i+1}. ${p.name} (CPU: ${p.cpu?.toFixed(1) || 0}%)`
-        ).join('\n');
-        bot.sendMessage(chatId, 
-            `📋 **Топ процессов:**\n\n${top10}\n\nВсего: ${processes.length}`,
-            { parse_mode: 'Markdown' }
-        );
+        try {
+            const psListModule = await import('ps-list');
+            const psList = psListModule.default;
+            const processes = await psList();
+            const top10 = processes.slice(0, 10).map((p, i) => 
+                `${i+1}. ${p.name} (CPU: ${p.cpu?.toFixed(1) || 0}%)`
+            ).join('\n');
+            bot.sendMessage(chatId, 
+                `📋 **Топ процессов:**\n\n${top10}\n\nВсего: ${processes.length}`,
+                { parse_mode: 'Markdown' }
+            );
+        } catch (error) {
+            bot.sendMessage(chatId, '❌ Ошибка получения списка процессов');
+        }
     }
     else if (data === 'refresh') {
         bot.answerCallbackQuery(query.id, { text: '🔄 Обновлено!' });
@@ -470,7 +466,7 @@ bot.onText(/\/disk/, async (msg) => {
     bot.sendMessage(msg.chat.id, `📊 **Диски:**\n\n${info}`, { parse_mode: 'Markdown' });
 });
 
-// ============= ПРОЦЕССЫ (С ИСПРАВЛЕННЫМ ИМПОРТОМ) =============
+// ============= ПРОЦЕССЫ =============
 
 bot.onText(/\/processes/, async (msg) => {
     if (!isAdmin(msg.from.id)) return;
@@ -487,7 +483,6 @@ bot.onText(/\/processes/, async (msg) => {
         );
     } catch (error) {
         bot.sendMessage(msg.chat.id, '❌ Ошибка получения списка процессов');
-        console.error(error);
     }
 });
 
@@ -521,7 +516,6 @@ bot.onText(/\/kill (.+)/, async (msg, match) => {
         }
     } catch (error) {
         bot.sendMessage(msg.chat.id, '❌ Ошибка поиска процесса');
-        console.error(error);
     }
 });
 
@@ -549,19 +543,6 @@ bot.onText(/\/click/, (msg) => {
     exec(cmd);
     bot.sendMessage(msg.chat.id, '🖱 Клик');
 });
-
-// ============= ЯРКОСТЬ =============
-
-// bot.onText(/\/brightness (.+)/, (msg, match) => {
-//     if (!isAdmin(msg.from.id)) return;
-//     const level = parseInt(match[1]);
-//     if (level >= 0 && level <= 100) {
-//         exec(`xrandr --output eDP-1 --brightness ${level / 100}`);
-//         bot.sendMessage(msg.chat.id, `☀️ Яркость: ${level}%`);
-//     } else {
-//         bot.sendMessage(msg.chat.id, '❌ Введите число от 0 до 100');
-//     }
-// });
 
 // ============= УВЕДОМЛЕНИЯ =============
 
