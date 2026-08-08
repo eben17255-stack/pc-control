@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 
 // ============= НАСТРОЙКИ =============
 const TOKEN = process.env.BOT_TOKEN || "8672837047:AAG7fz0nyPN8yAPGgczm5zyrOQnkW8wE9ig";
-const ADMIN_IDS = [8754794142]; // Ваш ID
+const ADMIN_IDS = [8754794142];
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -23,28 +23,12 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId, 
         `🎮 **БОТ УПРАВЛЕНИЯ ПК**\n\n` +
         `Доступные команды:\n` +
-        `/screenshot - скриншот\n` +
         `/shutdown - выключить ПК\n` +
         `/restart - перезагрузить\n` +
-        `/ping - проверка связи`,
+        `/ping - проверка связи\n` +
+        `/id - ваш ID`,
         { parse_mode: 'Markdown' }
     );
-});
-
-// ============= СКРИНШОТ =============
-bot.onText(/\/screenshot/, async (msg) => {
-    if (!isAdmin(msg.from.id)) return;
-    try {
-        const screenshot = require('screenshot-desktop');
-        const fs = require('fs');
-        const img = await screenshot();
-        fs.writeFileSync('screen.png', img);
-        await bot.sendPhoto(msg.chat.id, 'screen.png');
-        fs.unlinkSync('screen.png');
-        bot.sendMessage(msg.chat.id, '📸 Скриншот сделан!');
-    } catch(e) {
-        bot.sendMessage(msg.chat.id, '❌ Ошибка скриншота');
-    }
 });
 
 // ============= ВЫКЛЮЧЕНИЕ =============
