@@ -1,17 +1,22 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const fs = require('fs');
-const psList = require('ps-list');
 const loudness = require('loudness');
 const si = require('systeminformation');
 const axios = require('axios');
 const screenshot = require('screenshot-desktop');
 
+// Динамический импорт для ps-list (ES модуль)
+let psList;
+(async () => {
+    psList = (await import('ps-list')).default;
+})();
+
 // ============= НАСТРОЙКИ =============
-const TOKEN = process.env.BOT_TOKEN || "8672837047:AAG7fz0nyPN8yAPGgczm5zyrOQnkW8wE9ig";
+const TOKEN = process.env.BOT_TOKEN || "ВАШ_ТОКЕН";
 const ADMIN_IDS = process.env.ADMIN_IDS ? 
     process.env.ADMIN_IDS.split(',').map(Number) : 
-    [8754794142];
+    [123456789];
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
@@ -179,6 +184,9 @@ bot.on('callback_query', async (query) => {
         );
     }
     else if (data === 'processes') {
+        // Используем динамический импорт psList
+        const psListModule = await import('ps-list');
+        const psList = psListModule.default;
         const processes = await psList();
         const top10 = processes.slice(0, 10).map((p, i) => 
             `${i+1}. ${p.name} (CPU: ${p.cpu?.toFixed(1) || 0}%)`
@@ -462,16 +470,25 @@ bot.onText(/\/disk/, async (msg) => {
     bot.sendMessage(msg.chat.id, `📊 **Диски:**\n\n${info}`, { parse_mode: 'Markdown' });
 });
 
+// ============= ПРОЦЕССЫ (С ИСПРАВЛЕННЫМ ИМПОРТОМ) =============
+
 bot.onText(/\/processes/, async (msg) => {
     if (!isAdmin(msg.from.id)) return;
-    const processes = await psList();
-    const top10 = processes.slice(0, 10).map((p, i) => 
-        `${i+1}. ${p.name} (CPU: ${p.cpu?.toFixed(1) || 0}%)`
-    ).join('\n');
-    bot.sendMessage(msg.chat.id, 
-        `📋 **Топ 10 процессов:**\n\n${top10}\n\nВсего: ${processes.length}`,
-        { parse_mode: 'Markdown' }
-    );
+    try {
+        const psListModule = await import('ps-list');
+        const psList = psListModule.default;
+        const processes = await psList();
+        const top10 = processes.slice(0, 10).map((p, i) => 
+            `${i+1}. ${p.name} (CPU: ${p.cpu?.toFixed(1) || 0}%)`
+        ).join('\n');
+        bot.sendMessage(msg.chat.id, 
+            `📋 **Топ 10 процессов:**\n\n${top10}\n\nВсего: ${processes.length}`,
+            { parse_mode: 'Markdown' }
+        );
+    } catch (error) {
+        bot.sendMessage(msg.chat.id, '❌ Ошибка получения списка процессов');
+        console.error(error);
+    }
 });
 
 // ============= ПРОГРАММЫ =============
@@ -491,13 +508,20 @@ bot.onText(/\/run (.+)/, (msg, match) => {
 bot.onText(/\/kill (.+)/, async (msg, match) => {
     if (!isAdmin(msg.from.id)) return;
     const name = match[1].toLowerCase();
-    const processes = await psList();
-    const found = processes.find(p => p.name.toLowerCase().includes(name));
-    if (found) {
-        exec(`taskkill /PID ${found.pid} /F`);
-        bot.sendMessage(msg.chat.id, `❌ Закрыт: ${found.name}`);
-    } else {
-        bot.sendMessage(msg.chat.id, '❌ Процесс не найден');
+    try {
+        const psListModule = await import('ps-list');
+        const psList = psListModule.default;
+        const processes = await psList();
+        const found = processes.find(p => p.name.toLowerCase().includes(name));
+        if (found) {
+            exec(`taskkill /PID ${found.pid} /F`);
+            bot.sendMessage(msg.chat.id, `❌ Закрыт: ${found.name}`);
+        } else {
+            bot.sendMessage(msg.chat.id, '❌ Процесс не найден');
+        }
+    } catch (error) {
+        bot.sendMessage(msg.chat.id, '❌ Ошибка поиска процесса');
+        console.error(error);
     }
 });
 
