@@ -552,16 +552,16 @@ bot.onText(/\/click/, (msg) => {
 
 // ============= ЯРКОСТЬ =============
 
-bot.onText(/\/brightness (.+)/, (msg, match) => {
-    if (!isAdmin(msg.from.id)) return;
-    const level = parseInt(match[1]);
-    if (level >= 0 && level <= 100) {
-        exec(`powershell -command "(Get-WmiObject -Namespace root/WMI -Class WmiMonitorBrightnessMethods).WmiSetBrightness(0,${level})"`);
-        bot.sendMessage(msg.chat.id, `☀️ Яркость: ${level}%`);
-    } else {
-        bot.sendMessage(msg.chat.id, '❌ Введите число от 0 до 100');
-    }
-});
+// bot.onText(/\/brightness (.+)/, (msg, match) => {
+//     if (!isAdmin(msg.from.id)) return;
+//     const level = parseInt(match[1]);
+//     if (level >= 0 && level <= 100) {
+//         exec(`xrandr --output eDP-1 --brightness ${level / 100}`);
+//         bot.sendMessage(msg.chat.id, `☀️ Яркость: ${level}%`);
+//     } else {
+//         bot.sendMessage(msg.chat.id, '❌ Введите число от 0 до 100');
+//     }
+// });
 
 // ============= УВЕДОМЛЕНИЯ =============
 
