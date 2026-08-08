@@ -368,7 +368,7 @@ bot.onText(/\/cancel/, (msg) => {
     bot.sendMessage(msg.chat.id, '✅ Отменено');
 });
 
-// ============= ЗВУК =============
+// ============= ЗВУК (ЧЕРЕЗ LOUDNESS) =============
 
 bot.onText(/\/up/, async (msg) => {
     if (!isAdmin(msg.from.id)) return;
